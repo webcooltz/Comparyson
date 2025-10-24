@@ -3,7 +3,7 @@ import tkinter as tk
 
 
 def compare_directories():
-    # deep comparison
+    """ compares directories and files deeply """
     file_entry_array.append(file_entry.get())
     match, mismatch, errors = filecmp.cmpfiles(d1.get(), d2.get(), file_entry_array, shallow=False)
     my_string_var.set(match)

@@ -1,8 +1,17 @@
 # python-comparison
+
 A desktop app for comparing file directories/files in Python.
 
-### Running the app
+## Running the app
 
 * Download this repo
 * Open in Python IDE
-* Run
+* Run the app
+
+## To-do
+
+### General
+
+### compare_directories.py
+
+### compare_files.py
