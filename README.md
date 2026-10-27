@@ -1,4 +1,6 @@
-# Comparyson
+<p align="center"><img src="assets/logo.png" alt="Comparyson logo" width="128"></p>
+
+<h1 align="center">Comparyson</h1>
 
 A desktop app for comparing two directories and inspecting file differences side by side.
 
@@ -20,6 +22,8 @@ Requires Python 3.9+ with Tkinter (bundled with the standard installers). No oth
 python app.py                 # pick directories in the UI
 python app.py d1 d2           # or pass them on the command line
 ```
+
+On Windows, run `powershell -ExecutionPolicy Bypass -File make_shortcut.ps1` to add a Desktop shortcut with the logo.
 
 Press F5 to re-run a comparison. `d1/` and `d2/` hold sample data to try it out.
 

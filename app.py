@@ -14,6 +14,7 @@ from tkinter import font as tkfont
 import core
 
 APP_NAME = "Comparyson"
+ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
 LIGHT = {
     "bg": "#f4f5f7",
@@ -121,6 +122,7 @@ class App:
         )
 
         root.title(APP_NAME)
+        self._set_icon()
         root.geometry("1280x780")
         root.minsize(900, 560)
 
@@ -139,6 +141,13 @@ class App:
         root.bind("<Control-Down>", lambda e: self.goto_hunk(1))
         root.bind("<Control-Up>", lambda e: self.goto_hunk(-1))
         root.after(100, self._poll_scan)
+
+    def _set_icon(self):
+        try:
+            self.icon = tk.PhotoImage(file=os.path.join(ASSETS, "logo.png"))
+            self.root.iconphoto(True, self.icon)
+        except tk.TclError:
+            pass  # missing or unreadable icon is cosmetic only
 
     # ------------------------------------------------------------------ layout
 
@@ -831,6 +840,7 @@ def main():
         import ctypes
 
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("webcooltz.comparyson")
     except Exception:
         pass
     root = tk.Tk()
