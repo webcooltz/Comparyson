@@ -1,10 +1,11 @@
 """Comparison logic for Comparyson, kept free of any GUI code."""
 
+from __future__ import annotations
+
 import difflib
 import filecmp
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 SAME = "same"
 MODIFIED = "modified"
@@ -12,6 +13,7 @@ LEFT_ONLY = "left_only"
 RIGHT_ONLY = "right_only"
 
 MAX_TEXT_BYTES = 2 * 1024 * 1024  # files above this are not rendered
+MAX_LINES = 20000  # diffing is quadratic; skip files longer than this
 IGNORED_DIRS = {".git", "__pycache__", "node_modules", ".idea", ".vscode"}
 
 
@@ -24,10 +26,11 @@ class Entry:
 @dataclass(frozen=True)
 class Row:
     """One aligned line pair. A side is None when it has no line here."""
-    left_no: Optional[int]
-    left: Optional[str]
-    right_no: Optional[int]
-    right: Optional[str]
+
+    left_no: int | None
+    left: str | None
+    right_no: int | None
+    right: str | None
     tag: str  # equal | replace | delete | insert
     left_spans: tuple = ()  # intra-line (start, end) changes
     right_spans: tuple = ()
@@ -49,6 +52,7 @@ def scan(left_root, right_root):
         if not os.path.isdir(root):
             raise NotADirectoryError(f"Not a directory: {root}")
 
+    filecmp.clear_cache()  # re-scans must see on-disk changes
     left, right = _walk_files(left_root), _walk_files(right_root)
     entries = []
     for rel in sorted(left | right, key=str.lower):
@@ -58,8 +62,9 @@ def scan(left_root, right_root):
             status = RIGHT_ONLY
         else:
             try:
-                same = filecmp.cmp(os.path.join(left_root, rel),
-                                   os.path.join(right_root, rel), shallow=False)
+                same = filecmp.cmp(
+                    os.path.join(left_root, rel), os.path.join(right_root, rel), shallow=False
+                )
             except OSError:
                 same = False
             status = SAME if same else MODIFIED
@@ -104,8 +109,9 @@ def align(left_lines, right_lines):
     for op, i1, i2, j1, j2 in sm.get_opcodes():
         if op == "equal":
             for k in range(i2 - i1):
-                rows.append(Row(i1 + k + 1, left_lines[i1 + k],
-                                j1 + k + 1, right_lines[j1 + k], "equal"))
+                rows.append(
+                    Row(i1 + k + 1, left_lines[i1 + k], j1 + k + 1, right_lines[j1 + k], "equal")
+                )
             continue
         span = max(i2 - i1, j2 - j1)
         for k in range(span):

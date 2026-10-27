@@ -17,13 +17,22 @@ def write(root, rel, text):
 class ScanTests(unittest.TestCase):
     def test_statuses_and_subdirs(self):
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
-            write(a, "same.txt", "x"); write(b, "same.txt", "x")
-            write(a, "mod.txt", "1"); write(b, "mod.txt", "2")
+            write(a, "same.txt", "x")
+            write(b, "same.txt", "x")
+            write(a, "mod.txt", "1")
+            write(b, "mod.txt", "2")
             write(a, "sub/left.txt", "l")
             write(b, "sub/right.txt", "r")
             got = {e.rel: e.status for e in core.scan(a, b)}
-        self.assertEqual(got, {"same.txt": core.SAME, "mod.txt": core.MODIFIED,
-                               "sub/left.txt": core.LEFT_ONLY, "sub/right.txt": core.RIGHT_ONLY})
+        self.assertEqual(
+            got,
+            {
+                "same.txt": core.SAME,
+                "mod.txt": core.MODIFIED,
+                "sub/left.txt": core.LEFT_ONLY,
+                "sub/right.txt": core.RIGHT_ONLY,
+            },
+        )
 
     def test_missing_dir(self):
         with self.assertRaises(NotADirectoryError):

@@ -16,33 +16,69 @@ import core
 APP_NAME = "Comparyson"
 
 LIGHT = {
-    "bg": "#f4f5f7", "card": "#ffffff", "border": "#dfe2e8", "fg": "#1c2330",
-    "muted": "#6b7486", "accent": "#4f46e5", "accent_fg": "#ffffff",
-    "accent_hover": "#4338ca", "hover": "#eceef3", "select": "#e0e7ff",
-    "editor": "#ffffff", "gutter": "#f4f5f7", "gutter_fg": "#9aa3b2",
-    "del_bg": "#ffe3e3", "add_bg": "#ddf7e3", "chg_bg": "#fff4d1",
-    "del_in": "#ffb3b3", "add_in": "#a6e8b8", "chg_in": "#ffd966",
+    "bg": "#f4f5f7",
+    "card": "#ffffff",
+    "border": "#dfe2e8",
+    "fg": "#1c2330",
+    "muted": "#6b7486",
+    "accent": "#4f46e5",
+    "accent_fg": "#ffffff",
+    "accent_hover": "#4338ca",
+    "hover": "#eceef3",
+    "select": "#e0e7ff",
+    "editor": "#ffffff",
+    "gutter": "#f4f5f7",
+    "gutter_fg": "#9aa3b2",
+    "del_bg": "#ffe3e3",
+    "add_bg": "#ddf7e3",
+    "chg_bg": "#fff4d1",
+    "del_in": "#ffb3b3",
+    "add_in": "#a6e8b8",
+    "chg_in": "#ffd966",
     "pad": "#eef0f4",
-    "same": "#6b7486", "modified": "#b7791f", "left_only": "#c53030", "right_only": "#2f855a",
+    "same": "#6b7486",
+    "modified": "#b7791f",
+    "left_only": "#c53030",
+    "right_only": "#2f855a",
 }
 DARK = {
-    "bg": "#14171d", "card": "#1c2029", "border": "#2c3240", "fg": "#e6e9ef",
-    "muted": "#8b94a7", "accent": "#7c83ff", "accent_fg": "#0f1117",
-    "accent_hover": "#9aa0ff", "hover": "#262b37", "select": "#2d3354",
-    "editor": "#171a22", "gutter": "#1c2029", "gutter_fg": "#5d667a",
-    "del_bg": "#3a2024", "add_bg": "#1b3326", "chg_bg": "#3a3220",
-    "del_in": "#6b2a30", "add_in": "#2a5a3c", "chg_in": "#6b5a22",
+    "bg": "#14171d",
+    "card": "#1c2029",
+    "border": "#2c3240",
+    "fg": "#e6e9ef",
+    "muted": "#8b94a7",
+    "accent": "#7c83ff",
+    "accent_fg": "#0f1117",
+    "accent_hover": "#9aa0ff",
+    "hover": "#262b37",
+    "select": "#2d3354",
+    "editor": "#171a22",
+    "gutter": "#1c2029",
+    "gutter_fg": "#5d667a",
+    "del_bg": "#3a2024",
+    "add_bg": "#1b3326",
+    "chg_bg": "#3a3220",
+    "del_in": "#6b2a30",
+    "add_in": "#2a5a3c",
+    "chg_in": "#6b5a22",
     "pad": "#1d212b",
-    "same": "#8b94a7", "modified": "#f6c453", "left_only": "#ff8a8a", "right_only": "#6fdc9a",
+    "same": "#8b94a7",
+    "modified": "#f6c453",
+    "left_only": "#ff8a8a",
+    "right_only": "#6fdc9a",
 }
 
 STATUS_LABEL = {
-    core.SAME: "Identical", core.MODIFIED: "Modified",
-    core.LEFT_ONLY: "Only in 1", core.RIGHT_ONLY: "Only in 2",
+    core.SAME: "Identical",
+    core.MODIFIED: "Modified",
+    core.LEFT_ONLY: "Only in 1",
+    core.RIGHT_ONLY: "Only in 2",
 }
 FILTER_NAMES = {
-    core.MODIFIED: "Modified", core.LEFT_ONLY: "Only in 1",
-    core.RIGHT_ONLY: "Only in 2", core.SAME: "Identical",
+    core.MODIFIED: "Modified",
+    core.LEFT_ONLY: "Only in 1",
+    core.RIGHT_ONLY: "Only in 2",
+    core.SAME: "Identical",
 }
 
 
@@ -57,6 +93,8 @@ class App:
         self.colors = LIGHT
         self.dark = False
         self.entries = []
+        self.by_rel = {}
+        self.left_root = self.right_root = ""
         self.rows = []
         self.hunks = []
         self.hunk_idx = -1
@@ -64,10 +102,23 @@ class App:
         self.scan_queue = queue.Queue()
         self._syncing = False
 
-        self.ui_font = pick_font(root, ("Segoe UI Variable Text", "Segoe UI", "SF Pro Text",
-                                        "Helvetica Neue", "Ubuntu", "DejaVu Sans"), "TkDefaultFont")
-        self.mono_font = pick_font(root, ("Cascadia Mono", "Consolas", "Menlo",
-                                          "DejaVu Sans Mono", "Courier New"), "TkFixedFont")
+        self.ui_font = pick_font(
+            root,
+            (
+                "Segoe UI Variable Text",
+                "Segoe UI",
+                "SF Pro Text",
+                "Helvetica Neue",
+                "Ubuntu",
+                "DejaVu Sans",
+            ),
+            "TkDefaultFont",
+        )
+        self.mono_font = pick_font(
+            root,
+            ("Cascadia Mono", "Consolas", "Menlo", "DejaVu Sans Mono", "Courier New"),
+            "TkFixedFont",
+        )
 
         root.title(APP_NAME)
         root.geometry("1280x780")
@@ -100,28 +151,34 @@ class App:
         header.pack(fill="x")
         ttk.Label(header, text=APP_NAME, style="Title.TLabel").pack(side="left")
         ttk.Label(header, text="Directory comparison", style="Subtitle.TLabel").pack(
-            side="left", padx=(12, 0), pady=(6, 0))
-        self.theme_btn = ttk.Button(header, text="Dark mode", style="Ghost.TButton",
-                                    command=self.toggle_theme)
+            side="left", padx=(12, 0), pady=(6, 0)
+        )
+        self.theme_btn = ttk.Button(
+            header, text="Dark mode", style="Ghost.TButton", command=self.toggle_theme
+        )
         self.theme_btn.pack(side="right")
 
         # directory pickers
         card = ttk.Frame(self.outer, style="Card.TFrame", padding=14)
         card.pack(fill="x", pady=(14, 12))
         card.columnconfigure(1, weight=1)
-        for row, (label, var) in enumerate((("Directory 1", self.left_var),
-                                            ("Directory 2", self.right_var))):
+        for row, (label, var) in enumerate(
+            (("Directory 1", self.left_var), ("Directory 2", self.right_var))
+        ):
             ttk.Label(card, text=label, style="Card.TLabel").grid(
-                row=row, column=0, sticky="w", padx=(0, 12), pady=4)
+                row=row, column=0, sticky="w", padx=(0, 12), pady=4
+            )
             entry = ttk.Entry(card, textvariable=var)
             entry.grid(row=row, column=1, sticky="ew", pady=4, ipady=3)
             entry.bind("<Return>", lambda e: self.compare())
             ttk.Button(card, text="Browse...", command=lambda v=var: self.browse(v)).grid(
-                row=row, column=2, padx=(8, 0), pady=4)
+                row=row, column=2, padx=(8, 0), pady=4
+            )
         actions = ttk.Frame(card, style="Plain.TFrame")
         actions.grid(row=0, column=3, rowspan=2, padx=(16, 0))
-        self.compare_btn = ttk.Button(actions, text="Compare", style="Accent.TButton",
-                                      command=self.compare)
+        self.compare_btn = ttk.Button(
+            actions, text="Compare", style="Accent.TButton", command=self.compare
+        )
         self.compare_btn.pack(fill="x")
         ttk.Button(actions, text="Swap", command=self.swap).pack(fill="x", pady=(6, 0))
 
@@ -133,7 +190,8 @@ class App:
 
         self.status_var = tk.StringVar(value="Choose two directories to compare.")
         ttk.Label(self.outer, textvariable=self.status_var, style="Status.TLabel").pack(
-            fill="x", pady=(10, 0))
+            fill="x", pady=(10, 0)
+        )
 
     def _build_sidebar(self):
         side = ttk.Frame(self.paned, style="Card.TFrame", padding=10)
@@ -147,15 +205,21 @@ class App:
         chips.pack(fill="x", pady=(8, 8))
         self.chip_buttons = {}
         for i, status in enumerate(FILTER_NAMES):
-            cb = ttk.Checkbutton(chips, text=FILTER_NAMES[status], variable=self.filter_vars[status],
-                                 command=self.refresh_tree, style="Chip.TCheckbutton")
+            cb = ttk.Checkbutton(
+                chips,
+                text=FILTER_NAMES[status],
+                variable=self.filter_vars[status],
+                command=self.refresh_tree,
+                style="Chip.TCheckbutton",
+            )
             cb.grid(row=i // 2, column=i % 2, sticky="w", padx=(0, 10), pady=1)
             self.chip_buttons[status] = cb
 
         tree_wrap = ttk.Frame(side, style="Plain.TFrame")
         tree_wrap.pack(fill="both", expand=True)
-        self.tree = ttk.Treeview(tree_wrap, columns=("status",), selectmode="browse",
-                                 style="Files.Treeview")
+        self.tree = ttk.Treeview(
+            tree_wrap, columns=("status",), selectmode="browse", style="Files.Treeview"
+        )
         self.tree.heading("#0", text="File", anchor="w")
         self.tree.heading("status", text="Status", anchor="w")
         self.tree.column("#0", width=230, minwidth=120)
@@ -170,26 +234,18 @@ class App:
         side.configure(width=340)
 
     def _placeholder(self, entry, var, text):
-        """Show muted hint text in an empty entry (the var stays empty)."""
-        def show(_e=None):
-            if not var.get() and str(entry.focus_get()) != str(entry):
-                entry.configure(style="Hint.TEntry")
-                entry.delete(0, "end")
-                entry.insert(0, text)
-                self._hinted = True
+        """Overlay muted hint text on an entry while its variable is empty."""
+        hint = ttk.Label(entry, text=text, style="Placeholder.TLabel", cursor="xterm")
+        hint.bind("<Button-1>", lambda e: entry.focus_set())
 
-        def hide(_e=None):
-            if getattr(self, "_hinted", False):
-                self._hinted = False
-                entry.delete(0, "end")
-                entry.configure(style="TEntry")
+        def sync(*_):
+            if var.get():
+                hint.place_forget()
+            else:
+                hint.place(x=8, rely=0.5, anchor="w")
 
-        entry.configure(textvariable="")
-        entry.bind("<FocusIn>", hide)
-        entry.bind("<FocusOut>", lambda e: (var.set(entry.get()), show()))
-        entry.bind("<KeyRelease>", lambda e: var.set(entry.get()))
-        self._show_hint = show
-        show()
+        var.trace_add("write", sync)
+        sync()
 
     def _build_viewer(self):
         view = ttk.Frame(self.paned, style="Card.TFrame", padding=10)
@@ -222,14 +278,46 @@ class App:
         self.head_right.grid(row=0, column=3, columnspan=2, sticky="ew")
 
         mono = (self.mono_font, 10)
-        self.gut_l = tk.Text(self.body, width=5, font=mono, wrap="none", borderwidth=0,
-                             highlightthickness=0, padx=6, cursor="arrow", takefocus=0)
-        self.txt_l = tk.Text(self.body, font=mono, wrap="none", borderwidth=0,
-                             highlightthickness=0, padx=8, undo=False)
-        self.gut_r = tk.Text(self.body, width=5, font=mono, wrap="none", borderwidth=0,
-                             highlightthickness=0, padx=6, cursor="arrow", takefocus=0)
-        self.txt_r = tk.Text(self.body, font=mono, wrap="none", borderwidth=0,
-                             highlightthickness=0, padx=8, undo=False)
+        self.gut_l = tk.Text(
+            self.body,
+            width=5,
+            font=mono,
+            wrap="none",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=6,
+            cursor="arrow",
+            takefocus=0,
+        )
+        self.txt_l = tk.Text(
+            self.body,
+            font=mono,
+            wrap="none",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=8,
+            undo=False,
+        )
+        self.gut_r = tk.Text(
+            self.body,
+            width=5,
+            font=mono,
+            wrap="none",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=6,
+            cursor="arrow",
+            takefocus=0,
+        )
+        self.txt_r = tk.Text(
+            self.body,
+            font=mono,
+            wrap="none",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=8,
+            undo=False,
+        )
         self.gut_l.grid(row=1, column=0, sticky="ns")
         self.txt_l.grid(row=1, column=1, sticky="nsew")
         self.divider = tk.Frame(self.body, width=1)
@@ -264,8 +352,9 @@ class App:
             w.bind("<Button-1>", lambda e: "break")
             w.bind("<B1-Motion>", lambda e: "break")
 
-        self.message = tk.Label(self.body, text="Select a file to see its differences",
-                                font=(self.ui_font, 11))
+        self.message = tk.Label(
+            self.body, text="Select a file to see its differences", font=(self.ui_font, 11)
+        )
         self.message.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     # ------------------------------------------------------------------- theme
@@ -275,12 +364,23 @@ class App:
         s = self.style
         ui = self.ui_font
         self.root.configure(bg=c["bg"])
-        s.configure(".", font=(ui, 10), background=c["bg"], foreground=c["fg"],
-                    bordercolor=c["border"], focuscolor=c["card"])
+        s.configure(
+            ".",
+            font=(ui, 10),
+            background=c["bg"],
+            foreground=c["fg"],
+            bordercolor=c["border"],
+            focuscolor=c["card"],
+        )
         s.configure("App.TFrame", background=c["bg"])
         s.configure("Plain.TFrame", background=c["card"])
-        s.configure("Card.TFrame", background=c["card"], bordercolor=c["border"], relief="solid",
-                    borderwidth=1)
+        s.configure(
+            "Card.TFrame",
+            background=c["card"],
+            bordercolor=c["border"],
+            relief="solid",
+            borderwidth=1,
+        )
         s.configure("TLabel", background=c["bg"], foreground=c["fg"])
         s.configure("Title.TLabel", font=(ui, 20, "bold"), background=c["bg"])
         s.configure("Subtitle.TLabel", foreground=c["muted"], background=c["bg"])
@@ -289,62 +389,139 @@ class App:
         s.configure("Hint.TLabel", background=c["card"], foreground=c["muted"])
         s.configure("Status.TLabel", background=c["bg"], foreground=c["muted"])
         s.configure("FileTitle.TLabel", font=(ui, 12, "bold"), background=c["card"])
-        s.configure("PaneHead.TLabel", background=c["card"], foreground=c["muted"],
-                    font=(ui, 9, "bold"), padding=(8, 0, 0, 6))
+        s.configure(
+            "PaneHead.TLabel",
+            background=c["card"],
+            foreground=c["muted"],
+            font=(ui, 9, "bold"),
+            padding=(8, 0, 0, 6),
+        )
 
-        s.configure("TButton", background=c["card"], foreground=c["fg"], bordercolor=c["border"],
-                    padding=(14, 6), relief="flat", borderwidth=1,
-                    lightcolor=c["border"], darkcolor=c["border"])
-        s.map("TButton", background=[("active", c["hover"]), ("disabled", c["card"])],
-              foreground=[("disabled", c["muted"])])
-        s.configure("Accent.TButton", background=c["accent"], foreground=c["accent_fg"],
-                    bordercolor=c["accent"], lightcolor=c["accent"], darkcolor=c["accent"],
-                    padding=(18, 8), font=(ui, 10, "bold"))
-        s.map("Accent.TButton", background=[("active", c["accent_hover"]),
-                                            ("disabled", c["border"])],
-              bordercolor=[("active", c["accent_hover"])],
-              lightcolor=[("active", c["accent_hover"])],
-              darkcolor=[("active", c["accent_hover"])])
-        s.configure("Ghost.TButton", background=c["bg"], bordercolor=c["bg"], lightcolor=c["bg"],
-                    darkcolor=c["bg"], foreground=c["muted"])
-        s.map("Ghost.TButton", background=[("active", c["hover"])],
-              bordercolor=[("active", c["hover"])])
+        s.configure(
+            "TButton",
+            background=c["card"],
+            foreground=c["fg"],
+            bordercolor=c["border"],
+            padding=(14, 6),
+            relief="flat",
+            borderwidth=1,
+            lightcolor=c["border"],
+            darkcolor=c["border"],
+        )
+        s.map(
+            "TButton",
+            background=[("active", c["hover"]), ("disabled", c["card"])],
+            foreground=[("disabled", c["muted"])],
+        )
+        s.configure(
+            "Accent.TButton",
+            background=c["accent"],
+            foreground=c["accent_fg"],
+            bordercolor=c["accent"],
+            lightcolor=c["accent"],
+            darkcolor=c["accent"],
+            padding=(18, 8),
+            font=(ui, 10, "bold"),
+        )
+        s.map(
+            "Accent.TButton",
+            background=[("active", c["accent_hover"]), ("disabled", c["border"])],
+            bordercolor=[("active", c["accent_hover"])],
+            lightcolor=[("active", c["accent_hover"])],
+            darkcolor=[("active", c["accent_hover"])],
+        )
+        s.configure(
+            "Ghost.TButton",
+            background=c["bg"],
+            bordercolor=c["bg"],
+            lightcolor=c["bg"],
+            darkcolor=c["bg"],
+            foreground=c["muted"],
+        )
+        s.map(
+            "Ghost.TButton",
+            background=[("active", c["hover"])],
+            bordercolor=[("active", c["hover"])],
+        )
 
-        s.configure("TEntry", fieldbackground=c["editor"], foreground=c["fg"],
-                    bordercolor=c["border"], lightcolor=c["border"], darkcolor=c["border"],
-                    insertcolor=c["fg"], padding=(6, 2))
-        s.configure("Hint.TEntry", foreground=c["muted"])
-        s.map("TEntry", bordercolor=[("focus", c["accent"])], lightcolor=[("focus", c["accent"])],
-              darkcolor=[("focus", c["accent"])])
+        s.configure(
+            "TEntry",
+            fieldbackground=c["editor"],
+            foreground=c["fg"],
+            bordercolor=c["border"],
+            lightcolor=c["border"],
+            darkcolor=c["border"],
+            insertcolor=c["fg"],
+            padding=(6, 2),
+        )
+        s.configure("Placeholder.TLabel", background=c["editor"], foreground=c["muted"])
+        s.map(
+            "TEntry",
+            bordercolor=[("focus", c["accent"])],
+            lightcolor=[("focus", c["accent"])],
+            darkcolor=[("focus", c["accent"])],
+        )
 
         s.configure("Chip.TCheckbutton", background=c["card"], foreground=c["fg"])
-        s.map("Chip.TCheckbutton", background=[("active", c["card"])],
-              indicatorcolor=[("selected", c["accent"]), ("!selected", c["editor"])])
+        s.map(
+            "Chip.TCheckbutton",
+            background=[("active", c["card"])],
+            indicatorcolor=[("selected", c["accent"]), ("!selected", c["editor"])],
+        )
 
-        s.configure("Files.Treeview", background=c["card"], fieldbackground=c["card"],
-                    foreground=c["fg"], rowheight=28, borderwidth=0, bordercolor=c["card"],
-                    lightcolor=c["card"], darkcolor=c["card"])
-        s.map("Files.Treeview", background=[("selected", c["select"])],
-              foreground=[("selected", c["fg"])])
-        s.configure("Treeview.Heading", background=c["card"], foreground=c["muted"],
-                    relief="flat", font=(ui, 9, "bold"), padding=(6, 4))
+        s.configure(
+            "Files.Treeview",
+            background=c["card"],
+            fieldbackground=c["card"],
+            foreground=c["fg"],
+            rowheight=28,
+            borderwidth=0,
+            bordercolor=c["card"],
+            lightcolor=c["card"],
+            darkcolor=c["card"],
+        )
+        s.map(
+            "Files.Treeview",
+            background=[("selected", c["select"])],
+            foreground=[("selected", c["fg"])],
+        )
+        s.configure(
+            "Treeview.Heading",
+            background=c["card"],
+            foreground=c["muted"],
+            relief="flat",
+            font=(ui, 9, "bold"),
+            padding=(6, 4),
+        )
         s.map("Treeview.Heading", background=[("active", c["card"])])
         for status in STATUS_LABEL:
             self.tree.tag_configure(status, foreground=c[status])
         self.tree.tag_configure("dir", foreground=c["muted"])
 
         for orient in ("Vertical", "Horizontal"):
-            s.configure(f"{orient}.TScrollbar", background=c["border"], troughcolor=c["card"],
-                        bordercolor=c["card"], arrowcolor=c["muted"], gripcount=0,
-                        lightcolor=c["border"], darkcolor=c["border"])
+            s.configure(
+                f"{orient}.TScrollbar",
+                background=c["border"],
+                troughcolor=c["card"],
+                bordercolor=c["card"],
+                arrowcolor=c["muted"],
+                gripcount=0,
+                lightcolor=c["border"],
+                darkcolor=c["border"],
+            )
             s.map(f"{orient}.TScrollbar", background=[("active", c["muted"])])
         s.configure("TPanedwindow", background=c["bg"])
         s.configure("Sash", sashthickness=10, background=c["bg"])
 
         for w in (self.txt_l, self.txt_r):
-            w.configure(bg=c["editor"], fg=c["fg"], insertbackground=c["fg"],
-                        selectbackground=c["select"], selectforeground=c["fg"],
-                        inactiveselectbackground=c["select"])
+            w.configure(
+                bg=c["editor"],
+                fg=c["fg"],
+                insertbackground=c["fg"],
+                selectbackground=c["select"],
+                selectforeground=c["fg"],
+                inactiveselectbackground=c["select"],
+            )
         for w in (self.gut_l, self.gut_r):
             w.configure(bg=c["gutter"], fg=c["gutter_fg"], selectbackground=c["gutter"])
         self.divider.configure(bg=c["border"])
@@ -427,8 +604,8 @@ class App:
             self.compare()
 
     def compare(self):
-        left = self.left_var.get().strip().strip('"')
-        right = self.right_var.get().strip().strip('"')
+        left = os.path.expanduser(self.left_var.get().strip().strip('"'))
+        right = os.path.expanduser(self.right_var.get().strip().strip('"'))
         if not left or not right:
             messagebox.showinfo(APP_NAME, "Choose both directories first.")
             return
@@ -437,15 +614,16 @@ class App:
                 messagebox.showerror(APP_NAME, f"{label} is not a valid directory:\n{path}")
                 return
         if os.path.normcase(os.path.realpath(left)) == os.path.normcase(os.path.realpath(right)):
-            messagebox.showwarning("Invalid selection", "Directory 2 cannot be the same as Directory 1.")
+            messagebox.showwarning(
+                "Invalid selection", "Directory 2 cannot be the same as Directory 1."
+            )
             return
-        self.left_root, self.right_root = left, right
         self.compare_btn.state(["disabled"])
         self.status_var.set("Scanning...")
 
         def work():
             try:
-                self.scan_queue.put(("ok", core.scan(left, right)))
+                self.scan_queue.put(("ok", (left, right, core.scan(left, right))))
             except Exception as exc:  # surfaced to the UI thread
                 self.scan_queue.put(("err", exc))
 
@@ -462,11 +640,13 @@ class App:
                 self.status_var.set("Comparison failed.")
                 messagebox.showerror(APP_NAME, str(payload))
             else:
-                self._load_entries(payload)
+                self._load_entries(*payload)
         self.root.after(100, self._poll_scan)
 
-    def _load_entries(self, entries):
+    def _load_entries(self, left_root, right_root, entries):
+        self.left_root, self.right_root = left_root, right_root
         self.entries = entries
+        self.by_rel = {e.rel: e for e in entries}
         counts = {s: 0 for s in FILTER_NAMES}
         for e in entries:
             counts[e.status] += 1
@@ -485,7 +665,8 @@ class App:
             self.status_var.set(
                 f"{len(entries)} files compared - {counts[core.MODIFIED]} modified, "
                 f"{counts[core.LEFT_ONLY]} only in 1, {counts[core.RIGHT_ONLY]} only in 2, "
-                f"{counts[core.SAME]} identical.")
+                f"{counts[core.SAME]} identical."
+            )
         first = next((e for e in entries if e.status == core.MODIFIED), None)
         if first and self.tree.exists("f:" + first.rel):
             self.tree.selection_set("f:" + first.rel)
@@ -500,12 +681,18 @@ class App:
             parent = ""
             parts = e.rel.split("/")
             for i in range(len(parts) - 1):
-                iid = "d:" + "/".join(parts[:i + 1])
+                iid = "d:" + "/".join(parts[: i + 1])
                 if not self.tree.exists(iid):
                     self.tree.insert(parent, "end", iid, text=parts[i], open=True, tags=("dir",))
                 parent = iid
-            self.tree.insert(parent, "end", "f:" + e.rel, text=parts[-1],
-                             values=(STATUS_LABEL[e.status],), tags=(e.status,))
+            self.tree.insert(
+                parent,
+                "end",
+                "f:" + e.rel,
+                text=parts[-1],
+                values=(STATUS_LABEL[e.status],),
+                tags=(e.status,),
+            )
         if self.current and self.tree.exists("f:" + self.current.rel):
             self.tree.selection_set("f:" + self.current.rel)
 
@@ -514,15 +701,16 @@ class App:
         if not sel or not sel[0].startswith("f:"):
             return
         rel = sel[0][2:]
-        entry = next((e for e in self.entries if e.rel == rel), None)
-        if entry:
+        entry = self.by_rel.get(rel)
+        if entry and entry is not self.current:
             self.show_entry(entry)
 
     # ------------------------------------------------------------------ viewer
 
     def _set_badge(self, status):
-        self.badge.configure(text=STATUS_LABEL[status], bg=self.colors["select"],
-                             fg=self.colors[status])
+        self.badge.configure(
+            text=STATUS_LABEL[status], bg=self.colors["select"], fg=self.colors[status]
+        )
 
     def clear_viewer(self, msg):
         self.current = None
@@ -552,6 +740,16 @@ class App:
             self.message.configure(text=note)
             self.message.place(relx=0, rely=0, relwidth=1, relheight=1)
             return
+        if max(len(left), len(right)) > core.MAX_LINES:
+            self.rows, self.hunks, self.hunk_idx = [], [], -1
+            for w in self.panes:
+                w.delete("1.0", "end")
+            self.hunk_label.configure(text="")
+            self.message.configure(
+                text=f"File has more than {core.MAX_LINES:,} lines - too large to diff here."
+            )
+            self.message.place(relx=0, rely=0, relwidth=1, relheight=1)
+            return
         self.message.place_forget()
         self.rows = core.align(left, right)
         self.hunks = core.hunk_starts(self.rows)
@@ -562,7 +760,7 @@ class App:
         elif self.hunks:
             self.goto_hunk(1)
         else:
-            self.hunk_label.configure(text="")
+            self.hunk_label.configure(text="Differs only in line endings or trailing newline")
 
     def _render(self):
         for w in self.panes:
@@ -575,10 +773,30 @@ class App:
         for i, row in enumerate(self.rows):
             ln = i + 1
             nl = "\n" if i < last else ""
-            self._put_side(self.txt_l, self.gut_l, row.left_no, row.left, row.tag, "delete",
-                           row.left_spans, ln, nl, width)
-            self._put_side(self.txt_r, self.gut_r, row.right_no, row.right, row.tag, "insert",
-                           row.right_spans, ln, nl, width)
+            self._put_side(
+                self.txt_l,
+                self.gut_l,
+                row.left_no,
+                row.left,
+                row.tag,
+                "delete",
+                row.left_spans,
+                ln,
+                nl,
+                width,
+            )
+            self._put_side(
+                self.txt_r,
+                self.gut_r,
+                row.right_no,
+                row.right,
+                row.tag,
+                "insert",
+                row.right_spans,
+                ln,
+                nl,
+                width,
+            )
         for w in self.gut_l, self.gut_r:
             w.configure(state="disabled")
         self.txt_l.yview_moveto(0)
@@ -611,6 +829,7 @@ class App:
 def main():
     try:
         import ctypes
+
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
     except Exception:
         pass
